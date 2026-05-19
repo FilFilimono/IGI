@@ -1,0 +1,11 @@
+Total sentences: 0
+Types: Dec: 0, Int: 0, Excl: 0
+Avg sentence len: 19.00, Avg word len: 9.50
+Smileys: 0
+Capitals: 
+Words < 5: 0
+Shortest ending in 'd': sdkfjnsd
+Modified text: hvjdhsffusd sdkfjnsd
+
+Words sorted by length:
+hvjdhsffusd, sdkfjnsd
