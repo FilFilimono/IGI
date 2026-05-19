@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Словарь терминов{% endblock %}
+{% block content %}
+<h2><i class="bi bi-book"></i> Словарь терминов / FAQ</h2>
+<form method="get" class="mb-3 d-flex gap-2">
+  <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Поиск...">
+  <button class="btn btn-primary">Найти</button>
+</form>
+<div class="accordion" id="glossaryAccordion">
+{% for term in terms %}
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#term{{ term.pk }}">
+      {{ term.question }} <small class="text-muted ms-2">{{ term.added_at|date:"d/m/Y" }}</small>
+    </button>
+  </h2>
+  <div id="term{{ term.pk }}" class="accordion-collapse collapse">
+    <div class="accordion-body">{{ term.answer|linebreaks }}</div>
+  </div>
+</div>
+{% empty %}<p class="text-muted mt-3">Ничего не найдено.</p>{% endfor %}
+</div>
+{% endblock %}

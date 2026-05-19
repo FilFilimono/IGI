@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Статистика продаж{% endblock %}
+{% block content %}
+<h2><i class="bi bi-bar-chart-line"></i> Статистика продаж</h2>
+
+{% if stats_data %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100"><div class="card-body">
+      <div class="text-muted small">Выполненных заказов</div>
+      <div class="fs-3 fw-bold text-primary">{{ stats_data.count }}</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100"><div class="card-body">
+      <div class="text-muted small">Общая выручка</div>
+      <div class="fs-3 fw-bold text-success">{{ stats_data.total }} руб.</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100"><div class="card-body">
+      <div class="text-muted small">Средний заказ</div>
+      <div class="fs-3 fw-bold">{{ stats_data.mean }} руб.</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100"><div class="card-body">
+      <div class="text-muted small">Медиана</div>
+      <div class="fs-3 fw-bold">{{ stats_data.median }} руб.</div>
+    </div></div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-4 mb-4">
+  <div class="col-md-7">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-graph-up-arrow"></i> Ежемесячный объём + тренд</div>
+      <div class="card-body"><canvas id="trendChart" height="220"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-pie-chart-fill"></i> Выручка по категориям</div>
+      <div class="card-body"><canvas id="categoryChart" height="220"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-trophy-fill text-warning"></i> Топ-10 популярных изделий</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-dark"><tr><th>#</th><th>Изделие</th><th>Категория</th><th class="text-end">Продано</th></tr></thead>
+          <tbody>
+          {% for p in popular %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ p.furniture__name }}</td>
+            <td><span class="badge bg-secondary">{{ p.furniture__category__name }}</span></td>
+            <td class="text-end fw-bold">{{ p.total_qty }} шт.</td>
+          </tr>
+          {% empty %}<tr><td colspan="4" class="text-center text-muted py-3">Нет данных о продажах</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-geo-alt-fill"></i> Клиенты по городам</div>
+      <div class="card-body"><canvas id="cityChart" height="180"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-table"></i> Выручка по категориям (сводная)</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-dark"><tr><th>Категория</th><th class="text-end">Кол-во</th><th class="text-end">Выручка</th></tr></thead>
+          <tbody>
+          {% for c in by_category %}
+          <tr>
+            <td>{{ c.furniture__category__name|default:"—" }}</td>
+            <td class="text-end">{{ c.total_qty }}</td>
+            <td class="text-end fw-bold">{{ c.total_revenue }} руб.</td>
+          </tr>
+          {% empty %}<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-calendar-year"></i> Годовой отчёт</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <thead class="table-dark"><tr><th>Год</th><th class="text-end">Заказов</th><th class="text-end">Выручка</th></tr></thead>
+          <tbody>
+          {% for y in yearly %}
+          <tr>
+            <td><strong>{{ y.year|date:"Y" }}</strong></td>
+            <td class="text-end">{{ y.count }}</td>
+            <td class="text-end fw-bold text-success">{{ y.total }} руб.</td>
+          </tr>
+          {% empty %}<tr><td colspan="3" class="text-center text-muted py-3">Нет данных</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+const trendData  = {{ trend_json|safe }};
+const catData    = {{ category_json|safe }};
+const cityData   = {{ city_json|safe }};
+
+// Тренд + данные
+if (trendData.labels.length) {
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendData.labels,
+      datasets: [
+        {label: 'Продажи (руб.)', data: trendData.values, borderColor:'#0d6efd', backgroundColor:'rgba(13,110,253,.1)', fill:true, tension:0.3, spanGaps:true},
+        {label: 'Тренд / Прогноз', data: trendData.trend, borderColor:'#dc3545', borderDash:[6,3], pointRadius:3, fill:false, tension:0}
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}, scales:{y:{beginAtZero:true}}}
+  });
+}
+
+if (catData.labels.length) {
+  new Chart(document.getElementById('categoryChart'), {
+    type:'doughnut',
+    data:{labels:catData.labels, datasets:[{data:catData.values, backgroundColor:['#0d6efd','#198754','#ffc107','#dc3545','#6f42c1','#0dcaf0']}]},
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+if (cityData.labels.length) {
+  new Chart(document.getElementById('cityChart'), {
+    type:'bar',
+    data:{labels:cityData.labels, datasets:[{label:'Клиентов', data:cityData.values, backgroundColor:'#0d6efd'}]},
+    options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{stepSize:1}}}}
+  });
+}
+</script>
+{% endblock %}

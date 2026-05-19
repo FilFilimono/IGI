@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Главная — МебельФабрика{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="p-4 bg-dark text-white rounded mb-4">
+      <h1 class="display-5 fw-bold"><i class="bi bi-box-seam"></i> МебельФабрика</h1>
+      <p class="lead">Производство качественной мебели — кухонной, кабинетной, офисной.</p>
+      <a href="{% url 'catalog:item_list' %}" class="btn btn-warning me-2">Каталог</a>
+      <a href="{% url 'main:contacts' %}" class="btn btn-outline-light">Контакты</a>
+    </div>
+    {% if latest_article %}
+    <div class="card mb-4">
+      <div class="card-header"><i class="bi bi-newspaper"></i> Последняя новость</div>
+      <div class="card-body">
+        {% if latest_article.image %}<img src="{{ latest_article.image.url }}" class="img-fluid rounded mb-3" style="max-height:200px;object-fit:cover;width:100%">{% endif %}
+        <h5>{{ latest_article.title }}</h5>
+        <p class="text-muted">{{ latest_article.summary }}</p>
+        <small class="text-muted">{{ latest_article.published_at|date:"d/m/Y" }}</small>
+        <br><a href="{% url 'main:news' %}" class="btn btn-sm btn-outline-primary mt-2">Все новости</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    {% if weather %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-cloud-sun"></i> Погода ({{ weather.city }})</div>
+      <div class="card-body text-center">
+        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="weather">
+        <h4>{{ weather.temp }}°C</h4>
+        <p class="text-capitalize text-muted">{{ weather.description }}</p>
+      </div>
+    </div>
+    {% endif %}
+    {% if currency %}
+    <div class="card mb-3">
+      <div class="card-header"><i class="bi bi-currency-exchange"></i> Курс валют</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>USD/BYN:</strong> {{ currency.USD_BYN }}</p>
+        <p class="mb-0"><strong>EUR/BYN:</strong> {{ currency.EUR_BYN }}</p>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card">
+      <div class="card-header"><i class="bi bi-star"></i> Рейтинг отзывов</div>
+      <div class="card-body text-center">
+        <h3>{{ avg_rating|floatformat:1|default:"—" }} ★</h3>
+        <p class="text-muted">{{ reviews_count }} отзывов</p>
+        <a href="{% url 'main:reviews' %}" class="btn btn-sm btn-outline-warning">Читать отзывы</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
