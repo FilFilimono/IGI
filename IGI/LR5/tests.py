@@ -760,6 +760,34 @@ class OrderViewsTest(TestCase):
         r = self.tc.get(reverse('orders:order_list') + '?q=ORD-VIEW')
         self.assertContains(r, 'ORD-VIEW-001')
 
+    def test_buyer_can_create_order(self):
+        buyer = User.objects.create_user('buyer_ord', 'bo@t.com', 'buyerpass')
+        client = Client.objects.create(
+            client_code='CL-BUY-001', company_name='ООО Покупатель',
+            phone='+375 (29) 222-33-44', city='minsk', address='ул. 2',
+            user=buyer,
+        )
+        self.tc.login(username='buyer_ord', password='buyerpass')
+        r = self.tc.get(reverse('orders:order_create'))
+        self.assertEqual(r.status_code, 200)
+        due = (date.today() + timedelta(days=14)).isoformat()
+        r = self.tc.post(reverse('orders:order_create'), {
+            'due_date': due,
+            'promo': '',
+            'notes': 'Тестовый заказ покупателя',
+            'items-TOTAL_FORMS': '1',
+            'items-INITIAL_FORMS': '0',
+            'items-MIN_NUM_FORMS': '1',
+            'items-MAX_NUM_FORMS': '10',
+            'items-0-furniture': self.item.pk,
+            'items-0-quantity': '3',
+        })
+        self.assertEqual(r.status_code, 302)
+        new_order = Order.objects.filter(client=client).exclude(pk=self.order.pk).first()
+        self.assertIsNotNone(new_order)
+        self.assertEqual(new_order.status, 'pending')
+        self.assertEqual(new_order.items.count(), 1)
+
 
 class EmployeeViewsTest(TestCase):
     def setUp(self):

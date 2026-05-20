@@ -1,57 +1,35 @@
 {% extends "base.html" %}
 {% block title %}{{ client.company_name }}{% endblock %}
 {% block content %}
-<nav aria-label="breadcrumb"><ol class="breadcrumb">
-  <li class="breadcrumb-item"><a href="{% url 'clients:client_list' %}">Клиенты</a></li>
-  <li class="breadcrumb-item active">{{ client.company_name }}</li>
-</ol></nav>
-<div class="row">
-  <div class="col-md-8">
-    <div class="card mb-3">
-      <div class="card-header"><h5 class="mb-0">{{ client.company_name }}</h5></div>
-      <div class="card-body">
-        <table class="table table-borderless">
-          <tr><th>Код</th><td>{{ client.client_code }}</td></tr>
-          <tr><th>Город</th><td>{{ client.get_city_display }}</td></tr>
-          <tr><th>Адрес</th><td>{{ client.address }}</td></tr>
-          <tr><th>Телефон</th><td>{{ client.phone }}</td></tr>
-          <tr><th>Email</th><td>{{ client.email|default:"—" }}</td></tr>
-          <tr><th>Контактное лицо</th><td>{{ client.contact_person|default:"—" }}</td></tr>
-          {% if client.birth_date %}<tr><th>Дата рождения</th><td>{{ client.birth_date|date:"d/m/Y" }} ({{ client.age }} лет)</td></tr>{% endif %}
-          <tr><th>Статус</th><td>{% if client.is_active %}<span class="badge bg-success">Активен</span>{% else %}<span class="badge bg-secondary">Неактивен</span>{% endif %}</td></tr>
-          <tr><th>Добавлен</th><td>{{ client.created_at|date:"d/m/Y" }}</td></tr>
-        </table>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header">История заказов</div>
-      <div class="card-body">
-        <table class="table table-sm">
-          <thead><tr><th>Номер</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr></thead>
-          <tbody>
-          {% for order in client.orders.all|slice:":10" %}
-          <tr>
-            <td><a href="{% url 'orders:order_detail' order.pk %}">{{ order.order_number }}</a></td>
-            <td>{{ order.order_date|date:"d/m/Y" }}</td>
-            <td>{{ order.total_amount }} руб.</td>
-            <td><span class="badge bg-secondary">{{ order.get_status_display }}</span></td>
-          </tr>
-          {% empty %}<tr><td colspan="4" class="text-muted">Заказов нет.</td></tr>{% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    {% if user.is_staff %}
-    <div class="card">
-      <div class="card-header">Действия</div>
-      <div class="card-body d-grid gap-2">
-        <a href="{% url 'clients:client_update' client.pk %}" class="btn btn-warning"><i class="bi bi-pencil"></i> Редактировать</a>
-        {% if user.is_superuser %}<a href="{% url 'clients:client_delete' client.pk %}" class="btn btn-danger"><i class="bi bi-trash"></i> Удалить</a>{% endif %}
-      </div>
-    </div>
-    {% endif %}
-  </div>
-</div>
+<p><a href="{% url 'clients:client_list' %}">Назад</a></p>
+<h2>{{ client.company_name }}</h2>
+<table border="1">
+<tr><th>Код</th><td>{{ client.client_code }}</td></tr>
+<tr><th>Город</th><td>{{ client.get_city_display }}</td></tr>
+<tr><th>Адрес</th><td>{{ client.address }}</td></tr>
+<tr><th>Телефон</th><td>{{ client.phone }}</td></tr>
+<tr><th>Email</th><td>{{ client.email|default:"—" }}</td></tr>
+<tr><th>Контактное лицо</th><td>{{ client.contact_person|default:"—" }}</td></tr>
+{% if client.birth_date %}<tr><th>Дата рождения</th><td>{{ client.birth_date|date:"d/m/Y" }} ({{ client.age }} лет)</td></tr>{% endif %}
+<tr><th>Статус</th><td>{% if client.is_active %}Активен{% else %}Неактивен{% endif %}</td></tr>
+<tr><th>Добавлен</th><td>{{ client.created_at|date:"d/m/Y" }}</td></tr>
+</table>
+{% if user.is_staff %}
+<p><a href="{% url 'clients:client_update' client.pk %}">Редактировать</a>{% if user.is_superuser %} | <a href="{% url 'clients:client_delete' client.pk %}">Удалить</a>{% endif %}</p>
+{% endif %}
+<hr>
+<h3>История заказов</h3>
+<table border="1">
+<tr><th>Номер</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr>
+{% for order in client.orders.all|slice:":10" %}
+<tr>
+<td><a href="{% url 'orders:order_detail' order.pk %}">{{ order.order_number }}</a></td>
+<td>{{ order.order_date|date:"d/m/Y" }}</td>
+<td>{{ order.total_amount }} руб.</td>
+<td>{{ order.get_status_display }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="4">Заказов нет.</td></tr>
+{% endfor %}
+</table>
 {% endblock %}

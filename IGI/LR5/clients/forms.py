@@ -17,7 +17,10 @@ class ClientForm(forms.ModelForm):
         bd = self.cleaned_data.get('birth_date')
         if bd:
             from django.conf import settings
-            age = (date.today() - bd).days // 365
+            today = date.today()
+            if bd > today:
+                raise forms.ValidationError('Дата рождения не может быть в будущем.')
+            age = today.year - bd.year - ((today.month, today.day) < (bd.month, bd.day))
             if age < settings.MIN_AGE:
                 raise forms.ValidationError(f'Контактному лицу должно быть не менее {settings.MIN_AGE} лет.')
         return bd

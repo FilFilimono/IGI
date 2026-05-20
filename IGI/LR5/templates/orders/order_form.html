@@ -1,21 +1,36 @@
 {% extends "base.html" %}
 {% block title %}{{ action }} заказ{% endblock %}
 {% block content %}
-<h2>{{ action }} заказ</h2>
-<div class="card"><div class="card-body">
-  <form method="post">
-    {% csrf_token %}
-    {% for field in form %}
-    <div class="mb-3">
-      <label class="form-label">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+<h1>{{ action }} заказ</h1>
+<form method="post">
+  {% csrf_token %}
+  {% for field in form %}
+  <p>
+    <label>{{ field.label }}{% if field.field.required %} *{% endif %}</label><br>
+    {{ field }}
+    {% for e in field.errors %}<br><strong>{{ e }}</strong>{% endfor %}
+  </p>
+  {% endfor %}
+
+  {% if formset %}
+  <h2>Изделия в заказе</h2>
+  {{ formset.management_form }}
+  {% for item_form in formset %}
+  <fieldset>
+    <legend>Позиция {{ forloop.counter }}</legend>
+    {% for field in item_form %}
+    {% if field.name != 'id' and field.name != 'DELETE' %}
+    <p>
+      <label>{{ field.label }}</label><br>
       {{ field }}
-      {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
-    </div>
+      {% for e in field.errors %}<br><strong>{{ e }}</strong>{% endfor %}
+    </p>
+    {% endif %}
     {% endfor %}
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">{{ action }}</button>
-      <a href="{% url 'orders:order_list' %}" class="btn btn-outline-secondary">Отмена</a>
-    </div>
-  </form>
-</div></div>
+  </fieldset>
+  {% endfor %}
+  {% endif %}
+
+  <p><button type="submit">{{ action }}</button> <a href="{% url 'orders:order_list' %}">Отмена</a></p>
+</form>
 {% endblock %}

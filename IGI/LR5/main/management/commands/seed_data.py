@@ -14,7 +14,15 @@ from django.utils.text import slugify
 class Command(BaseCommand):
     help = 'Заполняет базу данных тестовыми данными'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--replace-images',
+            action='store_true',
+            help='Заменить фото из static/seed/ (если файлы есть) или сгенерировать заново',
+        )
+
     def handle(self, *args, **options):
+        self.replace_images = options['replace_images']
         self.stdout.write('Заполнение базы данных...')
 
         self._create_superuser()
@@ -32,6 +40,7 @@ class Command(BaseCommand):
         self._create_company_info()
         self._create_orders()
         self._create_reviews()
+        self._assign_images()
 
         self.stdout.write(self.style.SUCCESS('✓ База данных заполнена успешно!'))
 
@@ -368,3 +377,103 @@ class Command(BaseCommand):
                         is_approved=True,
                     )
         self.stdout.write('  ✓ Отзывы')
+
+    def _assign_images(self):
+        """
+        Картинки для каталога и контактов.
+        1) Положите свои файлы в static/seed/furniture/ и static/seed/employees/
+           (jpg, jpeg, png, webp). Имена: по коду товара (KU-001.jpg) или 1.jpg, 2.jpg …
+        2) Запуск: python manage.py seed_data --replace-images
+        """
+        import io
+        from pathlib import Path
+        from PIL import Image, ImageDraw, ImageFont
+        from django.conf import settings
+        from django.core.files import File
+        from django.core.files.base import ContentFile
+        from catalog.models import FurnitureItem
+        from employees.models import Employee
+
+        seed_root = Path(settings.BASE_DIR) / 'static' / 'seed'
+        furniture_files = self._collect_seed_files(seed_root / 'furniture')
+        employee_files = self._collect_seed_files(seed_root / 'employees')
+
+        furniture_colors = [
+            (70, 130, 180), (34, 139, 34), (210, 105, 30),
+            (128, 0, 128), (220, 20, 60), (0, 128, 128),
+        ]
+        employee_colors = [
+            (52, 73, 94), (41, 128, 185), (39, 174, 96),
+            (142, 68, 173), (211, 84, 0), (192, 57, 43), (22, 160, 133),
+        ]
+
+        def _save_placeholder(obj, field_name, text, color, size):
+            img = Image.new('RGB', size, color)
+            draw = ImageDraw.Draw(img)
+            try:
+                font = ImageFont.truetype('/System/Library/Fonts/Supplemental/Arial.ttf', 18)
+            except OSError:
+                font = ImageFont.load_default()
+            lines = text.split('\n')
+            y = (size[1] - len(lines) * 22) // 2
+            for line in lines:
+                draw.text((16, y), line[:40], fill=(255, 255, 255), font=font)
+                y += 22
+            buf = io.BytesIO()
+            img.save(buf, format='JPEG', quality=85)
+            buf.seek(0)
+            filename = f'{getattr(obj, "product_code", None) or obj.pk}.jpg'
+            getattr(obj, field_name).save(filename, ContentFile(buf.read()), save=True)
+
+        def _save_from_file(obj, field_name, path):
+            with open(path, 'rb') as fh:
+                getattr(obj, field_name).save(path.name, File(fh), save=True)
+
+        furniture_count = 0
+        for i, item in enumerate(FurnitureItem.objects.all()):
+            if item.image and not self.replace_images:
+                continue
+            src = (
+                furniture_files.get(item.product_code.lower())
+                or furniture_files.get(item.product_code)
+                or (furniture_files.get(str(i + 1)) if furniture_files else None)
+            )
+            if not src and furniture_files:
+                src = list(furniture_files.values())[i % len(furniture_files)]
+            if src:
+                _save_from_file(item, 'image', src)
+            else:
+                color = furniture_colors[i % len(furniture_colors)]
+                _save_placeholder(item, 'image', item.name, color, (480, 320))
+            furniture_count += 1
+
+        employee_count = 0
+        for i, emp in enumerate(Employee.objects.all()):
+            if emp.photo and not self.replace_images:
+                continue
+            key = f'{emp.last_name}_{emp.first_name}'.lower()
+            src = employee_files.get(key) or employee_files.get(str(i + 1))
+            if not src and employee_files:
+                src = list(employee_files.values())[i % len(employee_files)]
+            if src:
+                _save_from_file(emp, 'photo', src)
+            else:
+                color = employee_colors[i % len(employee_colors)]
+                _save_placeholder(emp, 'photo', f'{emp.first_name}\n{emp.last_name}', color, (320, 320))
+            employee_count += 1
+
+        if furniture_count or employee_count:
+            src_note = 'из static/seed/' if (furniture_files or employee_files) else 'сгенерированы'
+            self.stdout.write(f'  ✓ Изображения ({src_note}): каталог {furniture_count}, сотрудники {employee_count}')
+
+    def _collect_seed_files(self, folder):
+        """Словарь имя_без_расширения -> Path для файлов в папке."""
+        from pathlib import Path
+        result = {}
+        folder = Path(folder)
+        if not folder.is_dir():
+            return result
+        for path in sorted(folder.iterdir()):
+            if path.suffix.lower() in {'.jpg', '.jpeg', '.png', '.webp'}:
+                result[path.stem.lower()] = path
+        return result

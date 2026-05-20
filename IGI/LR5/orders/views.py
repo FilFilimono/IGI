@@ -1,24 +1,79 @@
-import json
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Sum, Count, Avg
+from django.db.models import Q, Sum, Count, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import TruncMonth, TruncYear
+from django.utils import timezone
+from catalog.models import FurnitureItem
 from .models import Order, OrderItem
-from .forms import OrderForm
+from .forms import OrderForm, BuyerOrderForm, OrderItemFormSet, BuyerOrderItemFormSet
+from .charts import monthly_trend_chart, city_bar_chart
 
 logger = logging.getLogger('orders')
+
+_ORDER_ITEM_SUBTOTAL = ExpressionWrapper(
+    F('items__unit_price') * F('items__quantity'),
+    output_field=DecimalField(max_digits=12, decimal_places=2),
+)
+_ITEM_SUBTOTAL = ExpressionWrapper(
+    F('unit_price') * F('quantity'),
+    output_field=DecimalField(max_digits=12, decimal_places=2),
+)
+
+
+def _linear_trend(values, forecast=0):
+    if not values:
+        return []
+    if len(values) == 1:
+        return [round(values[0], 2)]
+
+    x = list(range(len(values)))
+    x_mean = sum(x) / len(x)
+    y_mean = sum(values) / len(values)
+    numerator = sum((xi - x_mean) * (yi - y_mean) for xi, yi in zip(x, values))
+    denominator = sum((xi - x_mean) ** 2 for xi in x) or 1
+    slope = numerator / denominator
+    intercept = y_mean - slope * x_mean
+    trend = [round(intercept + slope * xi, 2) for xi in x]
+    for i in range(1, forecast + 1):
+        trend.append(round(intercept + slope * (len(values) + i - 1), 2))
+    return trend
+
+
+def _get_client_profile(user):
+    try:
+        return user.client_profile
+    except Exception:
+        return None
+
+
+def _generate_order_number():
+    year = timezone.now().year
+    prefix = f'ORD-{year}-'
+    last = (
+        Order.objects.filter(order_number__startswith=prefix)
+        .order_by('-order_number')
+        .first()
+    )
+    if last:
+        try:
+            num = int(last.order_number.split('-')[-1]) + 1
+        except ValueError:
+            num = 1
+    else:
+        num = 1
+    return f'{prefix}{num:03d}'
 
 
 @login_required
 def order_list(request):
     orders = Order.objects.select_related('client', 'manager').prefetch_related('items')
     if not request.user.is_staff:
-        try:
-            client = request.user.client_profile
+        client = _get_client_profile(request.user)
+        if client:
             orders = orders.filter(client=client)
-        except Exception:
+        else:
             try:
                 emp = request.user.employee_profile
                 orders = orders.filter(manager=emp)
@@ -38,6 +93,7 @@ def order_list(request):
         'orders': orders,
         'status_choices': Order.STATUS_CHOICES,
         'q': q, 'status': status, 'sort': sort,
+        'can_create': request.user.is_staff or _get_client_profile(request.user),
     })
 
 
@@ -45,28 +101,63 @@ def order_list(request):
 def order_detail(request, pk):
     order = get_object_or_404(Order, pk=pk)
     if not request.user.is_staff:
-        try:
-            client = request.user.client_profile
-            if order.client != client:
-                messages.error(request, 'Нет доступа.')
-                return redirect('orders:order_list')
-        except Exception:
-            pass
+        client = _get_client_profile(request.user)
+        if client and order.client != client:
+            messages.error(request, 'Нет доступа.')
+            return redirect('orders:order_list')
     return render(request, 'orders/order_detail.html', {'order': order})
 
 
 @login_required
 def order_create(request):
-    if not request.user.is_staff:
+    client_profile = _get_client_profile(request.user)
+    is_buyer = client_profile and not request.user.is_staff
+
+    if not request.user.is_staff and not is_buyer:
         messages.error(request, 'Нет доступа.')
-        return redirect('orders:order_list')
+        return redirect('main:home')
+
+    if is_buyer:
+        form = BuyerOrderForm(request.POST or None)
+        formset = BuyerOrderItemFormSet(request.POST or None)
+        active_items = FurnitureItem.objects.filter(is_active=True)
+        for f in formset.forms:
+            f.fields['furniture'].queryset = active_items
+        if request.method == 'POST':
+            if form.is_valid() and formset.is_valid():
+                order = form.save(commit=False)
+                order.order_number = _generate_order_number()
+                order.client = client_profile
+                order.status = 'pending'
+                order.manager = None
+                order.save()
+                formset.instance = order
+                formset.save()
+                if not order.items.exists():
+                    order.delete()
+                    messages.error(request, 'Добавьте хотя бы одно изделие в заказ.')
+                else:
+                    logger.info(f'Order {order.order_number} created by buyer {request.user.username}')
+                    messages.success(request, f'Заказ {order.order_number} отправлен.')
+                    return redirect('orders:order_detail', pk=order.pk)
+        return render(request, 'orders/order_form.html', {
+            'form': form,
+            'formset': formset,
+            'action': 'Оформить',
+            'is_buyer': True,
+        })
+
     form = OrderForm(request.POST or None)
     if form.is_valid():
         order = form.save()
         logger.info(f'Order {order.order_number} created by {request.user.username}')
         messages.success(request, f'Заказ {order.order_number} создан.')
         return redirect('orders:order_detail', pk=order.pk)
-    return render(request, 'orders/order_form.html', {'form': form, 'action': 'Создать'})
+    return render(request, 'orders/order_form.html', {
+        'form': form,
+        'action': 'Создать',
+        'is_buyer': False,
+    })
 
 
 @login_required
@@ -80,7 +171,7 @@ def order_update(request, pk):
         form.save()
         messages.success(request, f'Заказ {order.order_number} обновлён.')
         return redirect('orders:order_detail', pk=pk)
-    return render(request, 'orders/order_form.html', {'form': form, 'action': 'Сохранить', 'order': order})
+    return render(request, 'orders/order_form.html', {'form': form, 'action': 'Сохранить', 'order': order, 'is_buyer': False})
 
 
 @login_required
@@ -103,56 +194,53 @@ def statistics(request):
         messages.error(request, 'Нет доступа.')
         return redirect('orders:order_list')
 
-    # Ежемесячный объем продаж
     monthly_qs = (
         Order.objects.filter(status='delivered')
         .annotate(month=TruncMonth('order_date'))
         .values('month')
-        .annotate(total=Sum('items__unit_price'))
+        .annotate(total=Sum(_ORDER_ITEM_SUBTOTAL))
         .order_by('month')
     )
-    monthly_json = json.dumps({
-        'labels': [str(m['month'].strftime('%m/%Y')) if m['month'] else '' for m in monthly_qs],
-        'values': [float(m['total'] or 0) for m in monthly_qs],
-    })
+    monthly_labels = [m['month'].strftime('%m/%Y') if m['month'] else '' for m in monthly_qs]
+    monthly_values = [float(m['total'] or 0) for m in monthly_qs]
 
-    # Популярность мебели
+    forecast_periods = 3
+    chart_labels = monthly_labels[:]
+    chart_values = monthly_values[:]
+    trend_values = _linear_trend(monthly_values, forecast=forecast_periods)
+    if len(monthly_values) >= 2:
+        chart_labels += [f'Прогноз+{i}' for i in range(1, forecast_periods + 1)]
+        chart_values += [None] * forecast_periods
+
     popular = (
-        OrderItem.objects.values('furniture__name', 'furniture__category__name')
+        OrderItem.objects.filter(order__status='delivered')
+        .values('furniture__name', 'furniture__category__name')
         .annotate(total_qty=Sum('quantity'))
         .order_by('-total_qty')[:10]
     )
 
-    # Прибыль по категориям
     by_category = (
-        OrderItem.objects.values('furniture__category__name')
-        .annotate(total_revenue=Sum('unit_price'), total_qty=Sum('quantity'))
+        OrderItem.objects.filter(order__status='delivered')
+        .values('furniture__category__name')
+        .annotate(total_revenue=Sum(_ITEM_SUBTOTAL), total_qty=Sum('quantity'))
         .order_by('-total_revenue')
     )
-    category_json = json.dumps({
-        'labels': [c['furniture__category__name'] or 'Без категории' for c in by_category],
-        'values': [float(c['total_revenue'] or 0) for c in by_category],
-    })
 
-    # Клиенты по городам
     from clients.models import Client
     clients_by_city = (
         Client.objects.values('city')
         .annotate(count=Count('id'))
         .order_by('-count')
     )
-    city_json = json.dumps({
-        'labels': [c['city'] for c in clients_by_city],
-        'values': [c['count'] for c in clients_by_city],
-    })
+    city_labels = [c['city'] for c in clients_by_city]
+    city_values = [c['count'] for c in clients_by_city]
 
-    # Статистика продаж
-    revenues = list(
-        Order.objects.filter(status='delivered')
-        .annotate(rev=Sum('items__unit_price'))
+    revenues = [
+        float(r) for r in Order.objects.filter(status='delivered')
+        .annotate(rev=Sum(_ORDER_ITEM_SUBTOTAL))
         .values_list('rev', flat=True)
-    )
-    revenues = [float(r) for r in revenues if r is not None]
+        if r is not None
+    ]
     stats_data = {}
     if revenues:
         srt = sorted(revenues)
@@ -164,46 +252,19 @@ def statistics(request):
             'count': n,
         }
 
-    # Годовой отчет
     yearly = (
         Order.objects.filter(status='delivered')
         .annotate(year=TruncYear('order_date'))
         .values('year')
-        .annotate(total=Sum('items__unit_price'), count=Count('id'))
+        .annotate(total=Sum(_ORDER_ITEM_SUBTOTAL), count=Count('pk', distinct=True))
         .order_by('year')
     )
 
-    # Линейный тренд продаж (прогноз)
-    trend_json = json.dumps({'labels': [], 'values': [], 'trend': []})
-    if len(revenues) >= 2:
-        import statistics as st
-        x = list(range(len(revenues)))
-        x_mean = sum(x) / len(x)
-        y_mean = sum(revenues) / len(revenues)
-        numerator = sum((xi - x_mean) * (yi - y_mean) for xi, yi in zip(x, revenues))
-        denominator = sum((xi - x_mean) ** 2 for xi in x) or 1
-        slope = numerator / denominator
-        intercept = y_mean - slope * x_mean
-        trend = [round(intercept + slope * xi, 2) for xi in x]
-        # Прогноз на 3 периода вперед
-        for i in range(1, 4):
-            xi = len(revenues) + i - 1
-            trend.append(round(intercept + slope * xi, 2))
-        trend_json = json.dumps({
-            'labels': [f'Период {i+1}' for i in range(len(revenues))] + ['Прогноз+1', 'Прогноз+2', 'Прогноз+3'],
-            'values': revenues + [None, None, None],
-            'trend': trend,
-        })
-
     return render(request, 'orders/statistics.html', {
-        'monthly': monthly_qs,
-        'monthly_json': monthly_json,
         'popular': popular,
         'by_category': by_category,
-        'category_json': category_json,
-        'clients_by_city': clients_by_city,
-        'city_json': city_json,
         'stats_data': stats_data,
         'yearly': yearly,
-        'trend_json': trend_json,
+        'chart_trend': monthly_trend_chart(chart_labels, chart_values, trend_values),
+        'chart_city': city_bar_chart(city_labels, city_values),
     })

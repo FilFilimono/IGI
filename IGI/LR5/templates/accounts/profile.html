@@ -1,83 +1,51 @@
 {% extends "base.html" %}
 {% block title %}Личный кабинет{% endblock %}
 {% block content %}
-<h2><i class="bi bi-person-circle"></i> Личный кабинет</h2>
-<div class="row">
-  <div class="col-md-4">
-    <div class="card mb-3">
-      <div class="card-header">Мои данные</div>
-      <div class="card-body text-center">
-        {% if profile.avatar %}<img src="{{ profile.avatar.url }}" class="rounded-circle mb-3" width="100" height="100" style="object-fit:cover">{% endif %}
-        <h5>{{ user.get_full_name|default:user.username }}</h5>
-        <p class="text-muted small">{{ user.email }}</p>
-        <span class="badge bg-{% if user.is_superuser %}danger{% elif user.is_staff %}warning text-dark{% else %}primary{% endif %}">
-          {% if user.is_superuser %}Администратор{% elif user.is_staff %}Персонал{% else %}{{ profile.get_role_display }}{% endif %}
-        </span>
-        <p class="mt-2 small text-muted">Зарегистрирован: {{ user.date_joined|date:"d/m/Y" }}</p>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header">Настройки профиля</div>
-      <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          {% for field in form %}
-          <div class="mb-3">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
-          </div>
-          {% endfor %}
-          <button type="submit" class="btn btn-primary w-100">Сохранить</button>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-8">
-    {% if client %}
-    <div class="card mb-3">
-      <div class="card-header"><i class="bi bi-building"></i> Моя компания</div>
-      <div class="card-body">
-        <h6>{{ client.company_name }}</h6>
-        <p class="mb-1 small"><i class="bi bi-geo-alt"></i> {{ client.get_city_display }}, {{ client.address }}</p>
-        <p class="mb-1 small"><i class="bi bi-telephone"></i> {{ client.phone }}</p>
-      </div>
-    </div>
-    {% if orders %}
-    <div class="card">
-      <div class="card-header"><i class="bi bi-cart3"></i> Мои последние заказы</div>
-      <div class="card-body">
-        <table class="table table-sm">
-          <thead><tr><th>Номер</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr></thead>
-          <tbody>
-          {% for o in orders %}
-          <tr>
-            <td><a href="{% url 'orders:order_detail' o.pk %}">{{ o.order_number }}</a></td>
-            <td>{{ o.order_date|date:"d/m/Y" }}</td>
-            <td>{{ o.total_amount }} руб.</td>
-            <td><span class="badge bg-secondary">{{ o.get_status_display }}</span></td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% endif %}
-    {% else %}
-    <div class="card">
-      <div class="card-body">
-        <h5>Информация</h5>
-        <p class="text-muted">Ваш аккаунт: <strong>{{ profile.get_role_display }}</strong></p>
-        <p class="text-muted">Часовой пояс: <strong>{{ profile.timezone }}</strong></p>
-        {% if user.is_staff %}
-        <div class="alert alert-info">
-          <strong>Сотрудник.</strong> У вас есть доступ к управлению заказами и клиентами.
-          <a href="{% url 'orders:order_list' %}" class="btn btn-sm btn-primary ms-2">Заказы</a>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
-  </div>
-</div>
+<h2>Личный кабинет</h2>
+{% if profile.avatar %}<p><img src="{{ profile.avatar.url }}" width="100" height="100" alt="Аватар"></p>{% endif %}
+<h3>{{ user.get_full_name|default:user.username }}</h3>
+<p>{{ user.email }}</p>
+<p>{% if user.is_superuser %}Администратор{% elif user.is_staff %}Персонал{% else %}{{ profile.get_role_display }}{% endif %}</p>
+<p>Зарегистрирован: {{ user.date_joined|date:"d/m/Y" }}</p>
+<hr>
+<h3>Настройки профиля</h3>
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+{% for field in form %}
+<p>{{ field.label }}</p>
+<p>{{ field }}</p>
+{% if field.errors %}<p>{{ field.errors }}</p>{% endif %}
+{% endfor %}
+<p><button type="submit">Сохранить</button></p>
+</form>
+{% if client %}
+<hr>
+<h3>Моя компания</h3>
+<p>{{ client.company_name }}</p>
+<p>{{ client.get_city_display }}, {{ client.address }}</p>
+<p>{{ client.phone }}</p>
+{% if orders %}
+<hr>
+<h3>Мои последние заказы</h3>
+<table border="1">
+<tr><th>Номер</th><th>Дата</th><th>Сумма</th><th>Статус</th></tr>
+{% for o in orders %}
+<tr>
+<td><a href="{% url 'orders:order_detail' o.pk %}">{{ o.order_number }}</a></td>
+<td>{{ o.order_date|date:"d/m/Y" }}</td>
+<td>{{ o.total_amount }} руб.</td>
+<td>{{ o.get_status_display }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+{% else %}
+<hr>
+<h3>Информация</h3>
+<p>Ваш аккаунт: {{ profile.get_role_display }}</p>
+<p>Часовой пояс: {{ profile.timezone }}</p>
+{% if user.is_staff %}
+<p>Сотрудник. У вас есть доступ к управлению заказами и клиентами. <a href="{% url 'orders:order_list' %}">Заказы</a></p>
+{% endif %}
+{% endif %}
 {% endblock %}

@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Вакансии{% endblock %}
 {% block content %}
-<h2><i class="bi bi-briefcase"></i> Вакансии</h2>
+<h2>Вакансии</h2>
 {% for v in vacancies %}
-<div class="card mb-3">
-  <div class="card-body">
-    <h5>{{ v.title }}</h5>
-    {% if v.salary_from or v.salary_to %}<p class="text-success fw-bold">Зарплата: {% if v.salary_from %}от {{ v.salary_from }} {% endif %}{% if v.salary_to %}до {{ v.salary_to }}{% endif %} руб.</p>{% endif %}
-    <p>{{ v.description|linebreaks }}</p>
-    {% if v.requirements %}<p><strong>Требования:</strong> {{ v.requirements }}</p>{% endif %}
-    <small class="text-muted">Добавлено: {{ v.created_at|date:"d/m/Y" }}</small>
-  </div>
-</div>
-{% empty %}<p class="text-muted">Вакансий пока нет.</p>{% endfor %}
+<hr>
+<h3>{{ v.title }}</h3>
+{% if v.salary_from or v.salary_to %}<p>Зарплата: {% if v.salary_from %}от {{ v.salary_from }} {% endif %}{% if v.salary_to %}до {{ v.salary_to }}{% endif %} руб.</p>{% endif %}
+<p>{{ v.description|linebreaks }}</p>
+{% if v.requirements %}<p>Требования: {{ v.requirements }}</p>{% endif %}
+<p>Добавлено: {{ v.created_at|date:"d/m/Y" }}</p>
+{% empty %}
+<p>Вакансий пока нет.</p>
+{% endfor %}
 {% endblock %}

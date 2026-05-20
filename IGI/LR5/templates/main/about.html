@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block title %}О компании{% endblock %}
 {% block content %}
-<h2><i class="bi bi-building"></i> О компании</h2>
-<div class="card"><div class="card-body">
-{% if info %}{{ info.content|linebreaks }}{% else %}<p class="text-muted">Информация обновляется.</p>{% endif %}
-</div></div>
+<h2>О компании</h2>
+{% if info %}{{ info.content|linebreaks }}{% else %}<p>Информация обновляется.</p>{% endif %}
 {% endblock %}

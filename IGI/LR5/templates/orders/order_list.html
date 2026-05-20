@@ -1,55 +1,43 @@
 {% extends "base.html" %}
 {% block title %}Заказы{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2><i class="bi bi-cart3"></i> Заказы</h2>
-  {% if user.is_staff %}<a href="{% url 'orders:order_create' %}" class="btn btn-success"><i class="bi bi-plus"></i> Новый заказ</a>{% endif %}
-</div>
-<div class="card mb-3">
-  <div class="card-body">
-    <form method="get" class="row g-2">
-      <div class="col-md-4"><input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Номер заказа, клиент..."></div>
-      <div class="col-md-3">
-        <select name="status" class="form-select">
-          <option value="">Все статусы</option>
-          {% for val, label in status_choices %}<option value="{{ val }}" {% if val == status %}selected{% endif %}>{{ label }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="col-md-3">
-        <select name="sort" class="form-select">
-          <option value="-order_date">Новые сначала</option>
-          <option value="order_date">Старые сначала</option>
-          <option value="due_date">По дате выполнения</option>
-        </select>
-      </div>
-      <div class="col-md-2"><button class="btn btn-primary w-100">Найти</button></div>
-    </form>
-  </div>
-</div>
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead class="table-dark">
-      <tr><th>Номер</th><th>Клиент</th><th>Дата</th><th>Выполнить до</th><th>Статус</th><th>Сумма</th><th>Менеджер</th><th></th></tr>
-    </thead>
-    <tbody>
-    {% for order in orders %}
-    <tr>
-      <td><a href="{% url 'orders:order_detail' order.pk %}">{{ order.order_number }}</a></td>
-      <td>{{ order.client.company_name }}</td>
-      <td>{{ order.order_date|date:"d/m/Y" }}</td>
-      <td>{{ order.due_date|date:"d/m/Y" }}</td>
-      <td>
-        {% if order.status == 'delivered' %}<span class="badge bg-success">{% elif order.status == 'cancelled' %}<span class="badge bg-danger">{% elif order.status == 'in_production' %}<span class="badge bg-primary">{% else %}<span class="badge bg-warning text-dark">{% endif %}{{ order.get_status_display }}</span>
-      </td>
-      <td>{{ order.total_amount }} руб.</td>
-      <td>{{ order.manager.last_name|default:"—" }}</td>
-      <td>
-        <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
-        {% if user.is_staff %}<a href="{% url 'orders:order_update' order.pk %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>{% endif %}
-      </td>
-    </tr>
-    {% empty %}<tr><td colspan="8" class="text-center text-muted">Заказов нет.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</div>
+<h1>Заказы</h1>
+{% if can_create %}<p><a href="{% url 'orders:order_create' %}">Новый заказ</a></p>{% endif %}
+
+<form method="get">
+  <p>Поиск: <input type="text" name="q" value="{{ q }}"></p>
+  <p>Статус:
+    <select name="status">
+      <option value="">Все</option>
+      {% for val, label in status_choices %}<option value="{{ val }}" {% if val == status %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </p>
+  <p>Сортировка:
+    <select name="sort">
+      <option value="-order_date">Новые сначала</option>
+      <option value="order_date">Старые сначала</option>
+      <option value="due_date">По дате выполнения</option>
+    </select>
+  </p>
+  <p><button type="submit">Найти</button></p>
+</form>
+
+<table border="1" cellpadding="4">
+  <tr>
+    <th>Номер</th><th>Клиент</th><th>Дата</th><th>Выполнить до</th>
+    <th>Статус</th><th>Сумма</th><th>Менеджер</th><th></th>
+  </tr>
+  {% for order in orders %}
+  <tr>
+    <td><a href="{% url 'orders:order_detail' order.pk %}">{{ order.order_number }}</a></td>
+    <td>{{ order.client.company_name }}</td>
+    <td>{{ order.order_date|date:"d/m/Y" }}</td>
+    <td>{{ order.due_date|date:"d/m/Y" }}</td>
+    <td>{{ order.get_status_display }}</td>
+    <td>{{ order.total_amount }} руб.</td>
+    <td>{{ order.manager.last_name|default:"—" }}</td>
+    <td><a href="{% url 'orders:order_detail' order.pk %}">Открыть</a></td>
+  </tr>
+  {% empty %}<tr><td colspan="8">Заказов нет.</td></tr>{% endfor %}
+</table>
 {% endblock %}

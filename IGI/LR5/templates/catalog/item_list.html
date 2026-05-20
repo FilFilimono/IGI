@@ -1,51 +1,28 @@
 {% extends "base.html" %}
 {% block title %}Каталог мебели{% endblock %}
 {% block content %}
-<h2><i class="bi bi-grid"></i> Каталог мебели</h2>
-<div class="row">
-  <div class="col-md-3">
-    <div class="card mb-3">
-      <div class="card-header">Фильтры</div>
-      <div class="card-body">
-        <form method="get">
-          {% for field in form %}
-          <div class="mb-2"><label class="form-label small">{{ field.label }}</label>{{ field }}</div>
-          {% endfor %}
-          <button class="btn btn-primary w-100">Применить</button>
-          <a href="{% url 'catalog:item_list' %}" class="btn btn-outline-secondary w-100 mt-1">Сбросить</a>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-9">
-    <div class="d-flex justify-content-between mb-3">
-      <span class="text-muted">Найдено: {{ items|length }}</span>
-      {% if user.is_staff %}<a href="{% url 'catalog:item_create' %}" class="btn btn-success btn-sm"><i class="bi bi-plus"></i> Добавить</a>{% endif %}
-    </div>
-    <div class="row g-3">
-    {% for item in items %}
-    <div class="col-md-6 col-lg-4">
-      <div class="card h-100">
-        {% if item.image %}<img src="{{ item.image.url }}" class="card-img-top" style="height:150px;object-fit:cover">
-        {% else %}<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:150px"><i class="bi bi-image text-muted fs-1"></i></div>{% endif %}
-        <div class="card-body">
-          <h6 class="card-title">{{ item.name }}</h6>
-          <p class="text-muted small mb-1">{{ item.category }} | {{ item.model }}</p>
-          <p class="small text-secondary">Код: {{ item.product_code }}</p>
-          <p class="fw-bold text-primary">{{ item.price }} руб.</p>
-          {% if not item.is_active %}<span class="badge bg-danger">Снято с производства</span>{% else %}<span class="badge bg-success">В производстве</span>{% endif %}
-        </div>
-        <div class="card-footer d-flex gap-1">
-          <a href="{% url 'catalog:item_detail' item.pk %}" class="btn btn-sm btn-outline-primary flex-fill">Подробнее</a>
-          {% if user.is_staff %}
-          <a href="{% url 'catalog:item_update' item.pk %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
-          <a href="{% url 'catalog:item_delete' item.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    {% empty %}<div class="col"><p class="text-muted">Ничего не найдено.</p></div>{% endfor %}
-    </div>
-  </div>
-</div>
+<h2>Каталог мебели</h2>
+<fieldset>
+<legend>Фильтры</legend>
+<form method="get">
+{% for field in form %}
+<p>{{ field.label }}: {{ field }}</p>
+{% endfor %}
+<p><button type="submit">Применить</button> <a href="{% url 'catalog:item_list' %}">Сбросить</a></p>
+</form>
+</fieldset>
+<p>Найдено: {{ items|length }}</p>
+{% if user.is_staff %}<p><a href="{% url 'catalog:item_create' %}">Добавить</a></p>{% endif %}
+{% for item in items %}
+<hr>
+{% if item.image %}<p><img src="{{ item.image.url }}" alt="{{ item.name }}"></p>{% endif %}
+<h3><a href="{% url 'catalog:item_detail' item.pk %}">{{ item.name }}</a></h3>
+<p>{{ item.category }} | {{ item.model }}</p>
+<p>Код: {{ item.product_code }}</p>
+<p>{{ item.price }} руб.</p>
+<p>{% if not item.is_active %}Снято с производства{% else %}В производстве{% endif %}</p>
+<p><a href="{% url 'catalog:item_detail' item.pk %}">Подробнее</a>{% if user.is_staff %} | <a href="{% url 'catalog:item_update' item.pk %}">Редактировать</a> | <a href="{% url 'catalog:item_delete' item.pk %}">Удалить</a>{% endif %}</p>
+{% empty %}
+<p>Ничего не найдено.</p>
+{% endfor %}
 {% endblock %}

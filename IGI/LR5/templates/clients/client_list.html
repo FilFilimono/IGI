@@ -1,49 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Клиенты{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2><i class="bi bi-building"></i> Клиенты</h2>
-  <a href="{% url 'clients:client_create' %}" class="btn btn-success"><i class="bi bi-plus"></i> Добавить</a>
-</div>
-<div class="card mb-3"><div class="card-body">
-  <form method="get" class="row g-2">
-    <div class="col-md-4"><input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Поиск..."></div>
-    <div class="col-md-3">
-      <select name="city" class="form-select">
-        <option value="">Все города</option>
-        {% for val, label in city_choices %}<option value="{{ val }}" {% if val == city %}selected{% endif %}>{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select name="sort" class="form-select">
-        <option value="company_name">По названию А-Я</option>
-        <option value="-created_at">Новые</option>
-        <option value="city">По городу</option>
-      </select>
-    </div>
-    <div class="col-md-2"><button class="btn btn-primary w-100">Найти</button></div>
-  </form>
-</div></div>
-<div class="table-responsive">
-  <table class="table table-hover">
-    <thead class="table-dark"><tr><th>Код</th><th>Компания</th><th>Город</th><th>Телефон</th><th>Email</th><th>Контакт</th><th>Статус</th><th></th></tr></thead>
-    <tbody>
-    {% for c in clients %}
-    <tr>
-      <td>{{ c.client_code }}</td>
-      <td><a href="{% url 'clients:client_detail' c.pk %}">{{ c.company_name }}</a></td>
-      <td>{{ c.get_city_display }}</td>
-      <td>{{ c.phone }}</td>
-      <td>{{ c.email|default:"—" }}</td>
-      <td>{{ c.contact_person|default:"—" }}</td>
-      <td>{% if c.is_active %}<span class="badge bg-success">Активен</span>{% else %}<span class="badge bg-secondary">Неактивен</span>{% endif %}</td>
-      <td>
-        <a href="{% url 'clients:client_update' c.pk %}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
-        {% if user.is_superuser %}<a href="{% url 'clients:client_delete' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>{% endif %}
-      </td>
-    </tr>
-    {% empty %}<tr><td colspan="8" class="text-center text-muted">Клиентов нет.</td></tr>{% endfor %}
-    </tbody>
-  </table>
-</div>
+<h2>Клиенты</h2>
+<p><a href="{% url 'clients:client_create' %}">Добавить</a></p>
+<form method="get">
+<p><input type="text" name="q" value="{{ q }}" placeholder="Поиск..."></p>
+<p>
+<select name="city">
+<option value="">Все города</option>
+{% for val, label in city_choices %}<option value="{{ val }}" {% if val == city %}selected{% endif %}>{{ label }}</option>{% endfor %}
+</select>
+</p>
+<p>
+<select name="sort">
+<option value="company_name">По названию А-Я</option>
+<option value="-created_at">Новые</option>
+<option value="city">По городу</option>
+</select>
+</p>
+<p><button type="submit">Найти</button></p>
+</form>
+<table border="1">
+<tr><th>Код</th><th>Компания</th><th>Город</th><th>Телефон</th><th>Email</th><th>Контакт</th><th>Статус</th><th></th></tr>
+{% for c in clients %}
+<tr>
+<td>{{ c.client_code }}</td>
+<td><a href="{% url 'clients:client_detail' c.pk %}">{{ c.company_name }}</a></td>
+<td>{{ c.get_city_display }}</td>
+<td>{{ c.phone }}</td>
+<td>{{ c.email|default:"—" }}</td>
+<td>{{ c.contact_person|default:"—" }}</td>
+<td>{% if c.is_active %}Активен{% else %}Неактивен{% endif %}</td>
+<td><a href="{% url 'clients:client_update' c.pk %}">Редактировать</a>{% if user.is_superuser %} | <a href="{% url 'clients:client_delete' c.pk %}">Удалить</a>{% endif %}</td>
+</tr>
+{% empty %}
+<tr><td colspan="8">Клиентов нет.</td></tr>
+{% endfor %}
+</table>
 {% endblock %}

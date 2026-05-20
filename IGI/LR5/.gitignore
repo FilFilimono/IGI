@@ -16,3 +16,6 @@ staticfiles/
 .coverage
 htmlcov/
 .pytest_cache/
+
+ future_styles
+ 

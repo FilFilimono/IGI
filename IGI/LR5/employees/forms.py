@@ -21,7 +21,10 @@ class EmployeeForm(forms.ModelForm):
     def clean_birth_date(self):
         bd = self.cleaned_data.get('birth_date')
         if bd:
-            age = (date.today() - bd).days // 365
+            today = date.today()
+            if bd > today:
+                raise forms.ValidationError('Дата рождения не может быть в будущем.')
+            age = today.year - bd.year - ((today.month, today.day) < (bd.month, bd.day))
             if age < settings.MIN_AGE:
                 raise forms.ValidationError(f'Сотрудник должен быть не моложе {settings.MIN_AGE} лет.')
         return bd
