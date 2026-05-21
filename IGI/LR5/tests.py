@@ -1,7 +1,3 @@
-"""
-Тесты проекта МебельФабрика
-Покрытие: модели, представления, формы, API
-"""
 import pytest
 from decimal import Decimal
 from datetime import date, timedelta
@@ -18,9 +14,6 @@ from main.models import Article, GlossaryTerm, Review, Vacancy, CompanyInfo
 from accounts.models import UserProfile
 
 
-# =========================================================
-# MODEL TESTS
-# =========================================================
 
 class FurnitureCategoryModelTest(TestCase):
     def setUp(self):
@@ -188,12 +181,10 @@ class PromoModelTest(TestCase):
         self.assertIn('TEST10', str(self.promo_active))
 
 
-# =========================================================
-# VIEW TESTS
-# =========================================================
+
 
 class PublicViewsTest(TestCase):
-    """Тесты публичных страниц (без авторизации)"""
+   
 
     def setUp(self):
         self.client = TestClient()
@@ -370,10 +361,6 @@ class ReviewTest(TestCase):
         self.assertEqual(Review.objects.count(), 1)
 
 
-# =========================================================
-# CRUD TESTS
-# =========================================================
-
 class FurnitureItemCRUDTest(TestCase):
     def setUp(self):
         self.tc = TestClient()
@@ -409,9 +396,7 @@ class FurnitureItemCRUDTest(TestCase):
         self.assertEqual(r.status_code, 302)
 
 
-# =========================================================
-# FORM VALIDATION TESTS
-# =========================================================
+
 
 class ClientFormTest(TestCase):
     def test_valid_phone(self):
@@ -475,9 +460,7 @@ class EmployeeFormTest(TestCase):
         self.assertIn('birth_date', form.errors)
 
 
-# =========================================================
-# API TESTS
-# =========================================================
+
 
 class APIPublicTest(TestCase):
     def setUp(self):
@@ -535,9 +518,7 @@ class APIAuthTest(TestCase):
         self.assertEqual(r.status_code, 200)
 
 
-# =========================================================
-# CONTEXT PROCESSOR TESTS
-# =========================================================
+
 
 class ContextProcessorTest(TestCase):
     def setUp(self):
@@ -558,12 +539,10 @@ class ContextProcessorTest(TestCase):
         self.assertEqual(len(parts[2]), 4)  # YYYY
 
 
-# =========================================================
-# PARAMETRIZE-STYLE TESTS
-# =========================================================
+
 
 class PriceFilterParametrizedTest(TestCase):
-    """Тест фильтрации по цене с разными параметрами"""
+
 
     def setUp(self):
         self.tc = TestClient()
@@ -603,10 +582,7 @@ class PriceFilterParametrizedTest(TestCase):
         self.assertContains(r, 'Товар 10000р')
 
 
-# =========================================================
-# ADDITIONAL TESTS — clients/orders/employees CRUD views
-# (to push coverage above 80%)
-# =========================================================
+
 
 class ClientViewsTest(TestCase):
     def setUp(self):

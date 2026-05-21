@@ -9,14 +9,14 @@ logger = logging.getLogger('orders')
 
 
 class Order(models.Model):
-    """Заказ от оптового продавца"""
+    
     STATUS_CHOICES = [
         ('pending', 'Ожидает'), ('confirmed', 'Подтверждён'),
         ('in_production', 'В производстве'), ('ready', 'Готов'),
         ('delivered', 'Доставлен'), ('cancelled', 'Отменён'),
     ]
     order_number = models.CharField(_('Номер заказа'), max_length=30, unique=True)
-    # ForeignKey: много заказов — один клиент
+    
     client = models.ForeignKey(
         Client,
         on_delete=models.PROTECT,
@@ -34,7 +34,7 @@ class Order(models.Model):
         verbose_name=_('Промокод')
     )
     notes = models.TextField(_('Примечания'), blank=True)
-    # ForeignKey: менеджер заказа
+
     manager = models.ForeignKey(
         'employees.Employee',
         on_delete=models.SET_NULL,
@@ -73,10 +73,9 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    """Позиция заказа"""
-    # ForeignKey: много позиций — один заказ
+    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name=_('Заказ'))
-    # ForeignKey: позиция привязана к одному изделию
+    
     furniture = models.ForeignKey(
         FurnitureItem,
         on_delete=models.PROTECT,

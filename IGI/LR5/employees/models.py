@@ -25,13 +25,13 @@ class Department(models.Model):
 
 
 class Employee(models.Model):
-    """Сотрудник фабрики"""
+   
     POSITION_CHOICES = [
         ('director', 'Директор'), ('manager', 'Менеджер'),
         ('designer', 'Дизайнер'), ('craftsman', 'Мастер'),
         ('accountant', 'Бухгалтер'), ('logist', 'Логист'), ('other', 'Другое'),
     ]
-    # OneToOneField: сотрудник = один пользователь системы
+
     user = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,
@@ -39,7 +39,7 @@ class Employee(models.Model):
         related_name='employee_profile',
         verbose_name=_('Пользователь')
     )
-    # ForeignKey: много сотрудников — один отдел
+
     department = models.ForeignKey(
         Department,
         on_delete=models.SET_NULL,
@@ -58,7 +58,7 @@ class Employee(models.Model):
     photo = models.ImageField(_('Фото'), upload_to='employees/', blank=True, null=True)
     description = models.TextField(_('Описание обязанностей'), blank=True)
     is_active = models.BooleanField(_('Работает'), default=True)
-    # ManyToManyField: сотрудник может работать с несколькими клиентами
+    
     managed_clients = models.ManyToManyField(
         'clients.Client',
         blank=True,

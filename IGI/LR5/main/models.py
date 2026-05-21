@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class Article(models.Model):
-    """Новости / статьи"""
+   
     title = models.CharField(_('Заголовок'), max_length=200)
     summary = models.CharField(_('Краткое содержание'), max_length=500)
     content = models.TextField(_('Содержание'))
@@ -23,7 +23,7 @@ class Article(models.Model):
 
 
 class GlossaryTerm(models.Model):
-    """Словарь терминов — FAQ"""
+    
     question = models.CharField(_('Вопрос'), max_length=300)
     answer = models.TextField(_('Ответ'))
     added_at = models.DateField(_('Дата добавления'), auto_now_add=True)
@@ -39,9 +39,9 @@ class GlossaryTerm(models.Model):
 
 
 class Review(models.Model):
-    """Отзывы"""
+    
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
-    # ForeignKey: отзыв принадлежит пользователю
+    
     user = models.ForeignKey(
         'auth.User',
         on_delete=models.CASCADE,
@@ -64,7 +64,7 @@ class Review(models.Model):
 
 
 class Vacancy(models.Model):
-    """Вакансии"""
+    
     title = models.CharField(_('Название вакансии'), max_length=200)
     description = models.TextField(_('Описание'))
     requirements = models.TextField(_('Требования'), blank=True)
@@ -84,7 +84,7 @@ class Vacancy(models.Model):
 
 
 class CompanyInfo(models.Model):
-    """О компании (синглтон)"""
+    
     title = models.CharField(_('Заголовок'), max_length=200, default='О нас')
     content = models.TextField(_('Содержание'))
     updated_at = models.DateTimeField(auto_now=True)

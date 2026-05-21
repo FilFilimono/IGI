@@ -1,4 +1,3 @@
-"""Графики статистики на matplotlib (без JavaScript)."""
 import base64
 import io
 
@@ -19,7 +18,7 @@ def _fig_to_base64(fig):
 
 
 def monthly_trend_chart(labels, values, trend):
-    """Линейный график продаж и тренда."""
+    
     if not labels:
         return None
     fig, ax = plt.subplots(figsize=(8, 3.5))
@@ -39,7 +38,6 @@ def monthly_trend_chart(labels, values, trend):
 
 
 def city_bar_chart(labels, values):
-    """Столбчатая диаграмма клиентов по городам."""
     if not labels:
         return None
     fig, ax = plt.subplots(figsize=(6, 3.5))

@@ -1,7 +1,3 @@
-"""
-Management command to populate the database with realistic demo data.
-Run: python manage.py seed_data
-"""
 import random
 from datetime import date, timedelta, datetime
 from decimal import Decimal
@@ -42,18 +38,18 @@ class Command(BaseCommand):
         self._create_reviews()
         self._assign_images()
 
-        self.stdout.write(self.style.SUCCESS('✓ База данных заполнена успешно!'))
+        self.stdout.write(self.style.SUCCESS(' База данных заполнена успешно!'))
 
     def _create_superuser(self):
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser('admin', 'admin@furniture.by', 'admin123')
-            self.stdout.write('  ✓ Суперпользователь: admin / admin123')
+            self.stdout.write('   Суперпользователь: admin / admin123')
 
-        # Staff user (employee)
+        
         if not User.objects.filter(username='manager1').exists():
             u = User.objects.create_user('manager1', 'manager@furniture.by', 'manager123', is_staff=True)
             u.first_name = 'Алексей'; u.last_name = 'Петров'; u.save()
-        # Buyer user
+        
         if not User.objects.filter(username='buyer1').exists():
             u = User.objects.create_user('buyer1', 'buyer@client.by', 'buyer123')
             u.first_name = 'Иван'; u.last_name = 'Сидоров'; u.save()
@@ -69,14 +65,14 @@ class Command(BaseCommand):
         ]
         for name, slug, desc in cats:
             FurnitureCategory.objects.get_or_create(slug=slug, defaults={'name': name, 'description': desc})
-        self.stdout.write('  ✓ Категории')
+        self.stdout.write('   Категории')
 
     def _create_models(self):
         from catalog.models import FurnitureModel
         models = ['Классик', 'Модерн', 'Эко', 'Люкс', 'Стандарт', 'Премиум', 'Бизнес', 'Комфорт']
         for name in models:
             FurnitureModel.objects.get_or_create(name=name)
-        self.stdout.write('  ✓ Модели')
+        self.stdout.write('   Модели')
 
     def _create_tags(self):
         from catalog.models import Tag
@@ -91,7 +87,7 @@ class Command(BaseCommand):
     def _create_furniture(self):
         from catalog.models import FurnitureItem, FurnitureCategory, FurnitureModel, Tag
         items_data = [
-            # (code, name, cat_slug, model, price, active)
+            
             ('KU-001', 'Кухонный гарнитур "Милан"', 'kitchen', 'Люкс', 2850.00, True),
             ('KU-002', 'Кухонный стол раскладной', 'kitchen', 'Классик', 450.00, True),
             ('KU-003', 'Стул кухонный "Комфорт"', 'kitchen', 'Стандарт', 89.00, True),
@@ -157,7 +153,7 @@ class Command(BaseCommand):
                 'valid_from': vfrom, 'valid_to': vto,
                 'usage_limit': 100, 'used_count': random.randint(0, 50),
             })
-        self.stdout.write('  ✓ Промокоды')
+        self.stdout.write('Промокоды')
 
     def _create_departments(self):
         from employees.models import Department
@@ -170,7 +166,7 @@ class Command(BaseCommand):
         ]
         for name, desc in depts:
             Department.objects.get_or_create(name=name, defaults={'description': desc})
-        self.stdout.write('  ✓ Отделы')
+        self.stdout.write('   Отделы')
 
     def _create_employees(self):
         from employees.models import Employee, Department
@@ -201,7 +197,7 @@ class Command(BaseCommand):
                     'is_active': True, 'user': user,
                 }
             )
-        self.stdout.write('  ✓ Сотрудники (7 чел.)')
+        self.stdout.write('   Сотрудники (7 чел.)')
 
     def _create_clients(self):
         from clients.models import Client
@@ -228,7 +224,6 @@ class Command(BaseCommand):
                 'birth_date': bd, 'is_active': True, 'user': user,
             })
 
-        # Bind buyer_user client profile
         try:
             from accounts.models import UserProfile
             prof, _ = UserProfile.objects.get_or_create(user=buyer_user)
@@ -236,7 +231,7 @@ class Command(BaseCommand):
         except Exception:
             pass
 
-        self.stdout.write('  ✓ Клиенты (12 компаний)')
+        self.stdout.write('   Клиенты (12 компаний)')
 
     def _create_articles(self):
         from main.models import Article
@@ -254,7 +249,7 @@ class Command(BaseCommand):
                 'is_published': published,
                 'published_at': timezone.now() - timedelta(days=i * 10),
             })
-        self.stdout.write('  ✓ Статьи')
+        self.stdout.write('   Статьи')
 
     def _create_glossary(self):
         from main.models import GlossaryTerm
@@ -270,7 +265,7 @@ class Command(BaseCommand):
         ]
         for q, a in terms:
             GlossaryTerm.objects.get_or_create(question=q, defaults={'answer': a})
-        self.stdout.write('  ✓ Словарь терминов')
+        self.stdout.write('   Словарь терминов')
 
     def _create_vacancies(self):
         from main.models import Vacancy
@@ -286,7 +281,7 @@ class Command(BaseCommand):
                 'salary_from': Decimal(str(s_from)), 'salary_to': Decimal(str(s_to)),
                 'is_active': True,
             })
-        self.stdout.write('  ✓ Вакансии')
+        self.stdout.write('Вакансии')
 
     def _create_company_info(self):
         from main.models import CompanyInfo
@@ -308,7 +303,7 @@ class Command(BaseCommand):
                 'Email: info@furniture.by'
             )}
         )
-        self.stdout.write('  ✓ О компании')
+        self.stdout.write('   О компании')
 
     def _create_orders(self):
         from orders.models import Order, OrderItem
@@ -351,7 +346,7 @@ class Command(BaseCommand):
                     order=order, furniture=furniture,
                     defaults={'quantity': qty, 'unit_price': furniture.price}
                 )
-        self.stdout.write('  ✓ Заказы (35 шт.)')
+        self.stdout.write('   Заказы (35 шт.)')
 
     def _create_reviews(self):
         from main.models import Review
@@ -376,15 +371,10 @@ class Command(BaseCommand):
                         text=text,
                         is_approved=True,
                     )
-        self.stdout.write('  ✓ Отзывы')
+        self.stdout.write('   Отзывы')
 
     def _assign_images(self):
-        """
-        Картинки для каталога и контактов.
-        1) Положите свои файлы в static/seed/furniture/ и static/seed/employees/
-           (jpg, jpeg, png, webp). Имена: по коду товара (KU-001.jpg) или 1.jpg, 2.jpg …
-        2) Запуск: python manage.py seed_data --replace-images
-        """
+        
         import io
         from pathlib import Path
         from PIL import Image, ImageDraw, ImageFont
@@ -464,10 +454,9 @@ class Command(BaseCommand):
 
         if furniture_count or employee_count:
             src_note = 'из static/seed/' if (furniture_files or employee_files) else 'сгенерированы'
-            self.stdout.write(f'  ✓ Изображения ({src_note}): каталог {furniture_count}, сотрудники {employee_count}')
+            self.stdout.write(f'   Изображения ({src_note}): каталог {furniture_count}, сотрудники {employee_count}')
 
     def _collect_seed_files(self, folder):
-        """Словарь имя_без_расширения -> Path для файлов в папке."""
         from pathlib import Path
         result = {}
         folder = Path(folder)

@@ -15,13 +15,12 @@ PHONE_VALIDATOR = RegexValidator(
 
 
 class Client(models.Model):
-    """Оптовый покупатель / компания-заказчик"""
     CITY_CHOICES = [
         ('minsk', 'Минск'), ('gomel', 'Гомель'), ('mogilev', 'Могилев'),
         ('vitebsk', 'Витебск'), ('grodno', 'Гродно'), ('brest', 'Брест'),
         ('other', 'Другой'),
     ]
-    # OneToOneField: клиент привязан к одному пользователю системы
+
     user = models.OneToOneField(
         User,
         on_delete=models.SET_NULL,

@@ -4,12 +4,12 @@ from django.utils.translation import gettext_lazy as _
 
 
 class UserProfile(models.Model):
-    """Профиль пользователя"""
+    
     ROLE_CHOICES = [
         ('buyer', 'Покупатель'),
         ('employee', 'Сотрудник'),
     ]
-    # OneToOneField: один профиль — один пользователь
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile', verbose_name=_('Пользователь'))
     role = models.CharField(_('Роль'), max_length=20, choices=ROLE_CHOICES, default='buyer')
     timezone = models.CharField(_('Часовой пояс'), max_length=50, default='Europe/Minsk')

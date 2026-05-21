@@ -10,7 +10,7 @@
 <p>Медиана: {{ stats_data.median }} руб.</p>
 {% endif %}
 
-<h2>Ежемесячный объём + тренд (matplotlib)</h2>
+<h2>Ежемесячный объём + тренд </h2>
 {% if chart_trend %}
 <p><img src="data:image/png;base64,{{ chart_trend }}" alt="График продаж"></p>
 {% else %}
@@ -30,7 +30,7 @@
   {% empty %}<tr><td colspan="4">Нет данных</td></tr>{% endfor %}
 </table>
 
-<h2>Клиенты по городам (matplotlib)</h2>
+<h2>Клиенты по городам </h2>
 {% if chart_city %}
 <p><img src="data:image/png;base64,{{ chart_city }}" alt="Клиенты по городам"></p>
 {% else %}

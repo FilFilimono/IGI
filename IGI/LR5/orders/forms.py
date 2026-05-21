@@ -16,7 +16,7 @@ class OrderForm(forms.ModelForm):
 
 
 class BuyerOrderForm(forms.ModelForm):
-    """Заказ от покупателя: клиент и номер подставляются автоматически."""
+
     class Meta:
         model = Order
         fields = ['due_date', 'promo', 'notes']

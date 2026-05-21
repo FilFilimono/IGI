@@ -18,7 +18,7 @@ def home(request):
     avg_rating = Review.objects.filter(is_approved=True).aggregate(avg=Avg('rating'))['avg']
     reviews_count = Review.objects.filter(is_approved=True).count()
 
-    # Weather API (OpenWeatherMap)
+    
     weather = None
     if settings.OPENWEATHER_API_KEY:
         try:
@@ -39,7 +39,7 @@ def home(request):
         except Exception as e:
             logger.warning(f'Weather API error: {e}')
 
-    # Currency API (exchangerate)
+    
     currency = None
     try:
         resp = requests.get(

@@ -1,16 +1,15 @@
-# Virtual environment
 furniture_factory_project/
 
-# Local DB and env
+
 db.sqlite3
 .env
 
-# Python
+
 __pycache__/
 *.py[cod]
 .Python
 
-# Django / tooling
+
 media/
 staticfiles/
 .coverage
@@ -19,3 +18,4 @@ htmlcov/
 
  future_styles
  
+project.zip

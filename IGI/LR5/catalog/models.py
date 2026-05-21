@@ -7,7 +7,6 @@ logger = logging.getLogger('catalog')
 
 
 class FurnitureCategory(models.Model):
-    """Вид мебели: кухонная, кабинетная, офисная"""
     name = models.CharField(_('Название'), max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     description = models.TextField(_('Описание'), blank=True)
@@ -24,7 +23,7 @@ class FurnitureCategory(models.Model):
 
 
 class FurnitureModel(models.Model):
-    """Модель мебели"""
+
     name = models.CharField(_('Название модели'), max_length=100)
     description = models.TextField(_('Описание'), blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -39,18 +38,18 @@ class FurnitureModel(models.Model):
 
 
 class FurnitureItem(models.Model):
-    """Изделие (конкретный товар)"""
-    # OneToOneField: каждое изделие имеет уникальный код продукта
+    
+    
     product_code = models.CharField(_('Код продукта'), max_length=50, unique=True)
     name = models.CharField(_('Название'), max_length=200)
-    # ForeignKey: много изделий — один вид
+    
     category = models.ForeignKey(
         FurnitureCategory,
         on_delete=models.PROTECT,
         related_name='items',
         verbose_name=_('Вид мебели')
     )
-    # ForeignKey: много изделий — одна модель
+    
     model = models.ForeignKey(
         FurnitureModel,
         on_delete=models.PROTECT,
@@ -69,7 +68,7 @@ class FurnitureItem(models.Model):
     weight = models.DecimalField(_('Вес (кг)'), max_digits=8, decimal_places=2, null=True, blank=True)
     dimensions = models.CharField(_('Габариты (ДxШxВ см)'), max_length=100, blank=True)
     material = models.CharField(_('Материал'), max_length=200, blank=True)
-    # ManyToManyField: изделие может иметь несколько тегов/характеристик
+    
     tags = models.ManyToManyField('Tag', blank=True, verbose_name=_('Теги'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -88,7 +87,7 @@ class FurnitureItem(models.Model):
 
 
 class Tag(models.Model):
-    """Теги для мебели"""
+    
     name = models.CharField(_('Тег'), max_length=50, unique=True)
     slug = models.SlugField(unique=True)
 
@@ -101,7 +100,7 @@ class Tag(models.Model):
 
 
 class Promo(models.Model):
-    """Промокоды и купоны"""
+    
     DISCOUNT_TYPE_CHOICES = [
         ('percent', _('Процент')),
         ('fixed', _('Фиксированная сумма')),
@@ -115,7 +114,7 @@ class Promo(models.Model):
     valid_to = models.DateTimeField(_('Действует до'))
     usage_limit = models.PositiveIntegerField(_('Лимит использований'), default=100)
     used_count = models.PositiveIntegerField(_('Использован раз'), default=0)
-    # ManyToManyField: промокод применим к нескольким категориям
+    
     applicable_categories = models.ManyToManyField(
         FurnitureCategory, blank=True, verbose_name=_('Применимо к категориям')
     )
