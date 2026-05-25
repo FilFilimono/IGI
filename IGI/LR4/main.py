@@ -1,23 +1,6 @@
 """
 Purpose: Main entry point for the application, connecting all modules.
 Lab: Final Compilation
-Version: 1.0
-Author: [Your Name]
-Date: 2026-04-29
-"""
-
-import sys
-import os
-from utils.validators import get_int_input
-from modules.task1 import run_task_1
-from modules.task2 import run_task_2
-from modules.task3 import run_task_3
-from modules.task4 import run_task_4
-from modules.task5 import run_task_5
-from modules.task6 import run_task_6
-"""
-Purpose: Main entry point for the application, connecting all modules.
-Lab: Final Compilation
 Version: 1.1
 Author: [Ваше Ф.И.О.]
 Date: 2026-04-29
